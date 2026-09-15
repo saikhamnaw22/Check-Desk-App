@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Check Dash — CNX ⇄ RGN</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12161d;
+    --panel: #1b212b;
+    --panel-raised: #212836;
+    --hairline: #303a49;
+    --cream: #ece3d2;
+    --muted: #8c93a4;
+    --brass: #c99a4a;
+    --teal: #4e8c82;
+    --terracotta: #c0563e;
+    --radius: 2px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'Fraunces', serif;
+    min-height:100vh;
+  }
+
+  ::selection{ background: var(--brass); color: #12161d; }
+
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+
+  a{ color: inherit; }
+
+  /* faint boarding-hall texture */
+  body{
+    background-image:
+      radial-gradient(circle at 100% 0%, rgba(201,154,74,0.06), transparent 45%),
+      radial-gradient(circle at 0% 100%, rgba(78,140,130,0.06), transparent 45%);
+    background-attachment: fixed;
+  }
+
+  .shell{
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 28px 20px 80px;
+  }
+
+  /* ---------- header : ticket stub ---------- */
+  header.stub{
+    display:flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 1px dashed var(--hairline);
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+    position: relative;
+  }
+  header.stub::before, header.stub::after{
+    content:"";
+    position:absolute;
+    bottom:-9px;
+    width:18px; height:18px;
+    border-radius:50%;
+    background: var(--bg);
+    border: 1px dashed var(--hairline);
+  }
+  header.stub::before{ left:-38px; }
+  header.stub::after{ right:-38px; }
+
+  .brand{
+    display:flex;
+    flex-direction: column;
+    gap:2px;
+  }
+  .brand .mark{
+    font-family:'IBM Plex Mono', monospace;
+    letter-spacing: 0.14em;
+    font-size: 12px;
+    color: var(--brass);
+  }
+  .brand h1{
+    margin:0;
+    font-weight: 600;
+    font-size: clamp(26px, 4vw, 34px);
+  }
+  .route{
+    text-align:right;
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .route strong{ color: var(--cream); letter-spacing: 0.08em; }
+
+  /* ---------- nav : gate numbers ---------- */
+  nav.gates{
+    display:flex;
+    gap: 6px;
+    margin-bottom: 30px;
+    overflow-x:auto;
+  }
+  nav.gates button{
+    appearance:none;
+    background: transparent;
+    border: 1px solid var(--hairline);
+    color: var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.09em;
+    padding: 9px 16px;
+    cursor:pointer;
+    border-radius: var(--radius);
+    white-space:nowrap;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  nav.gates button .gate-no{ color: var(--brass); margin-right:8px; }
+  nav.gates button.active{
+    color: var(--cream);
+    border-color: var(--brass);
+  }
+  nav.gates button:hover{ color: var(--cream); }
+
+  section.view{ display:none; }
+  section.view.active{ display:block; animation: fadeUp .35s ease; }
+  @keyframes fadeUp{
+    from{ opacity:0; transform: translateY(6px); }
+    to{ opacity:1; transform: translateY(0); }
+  }
+
+  /* ---------- home ---------- */
+  .greeting-block{ margin-bottom: 34px; }
+  .greeting-block .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--teal);
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+  .greeting-block h2{
+    font-size: clamp(32px, 6vw, 48px);
+    margin: 0 0 8px;
+    font-weight: 600;
+  }
+  .greeting-block .sub{
+    color: var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+
+  .board{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 640px){ .board{ grid-template-columns: 1fr; } }
+
+  .ticket{
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 20px 18px 22px;
+    text-decoration:none;
+    display:block;
+    position:relative;
+    cursor:pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .ticket:hover{ border-color: var(--brass); background: var(--panel-raised); }
+  .ticket .tkt-icon{ font-size: 22px; margin-bottom: 14px; display:block; }
+  .ticket h3{
+    margin: 0 0 6px;
+    font-size: 19px;
+    font-weight: 600;
+  }
+  .ticket p{
+    margin:0;
+    color: var(--muted);
+    font-size: 13.5px;
+    line-height: 1.5;
+  }
+  .ticket .arrow{
+    position:absolute;
+    top:20px; right:18px;
+    font-family:'IBM Plex Mono', monospace;
+    color: var(--brass);
+    font-size: 14px;
+  }
+
+  /* ---------- shared page head ---------- */
+  .page-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom: 24px;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .page-head h2{ margin:0; font-size: clamp(26px,4vw,32px); font-weight:600; }
+  .back{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration:none;
+    border:none;
+    background:none;
+    cursor:pointer;
+    letter-spacing:0.06em;
+  }
+  .back:hover{ color: var(--brass); }
+  .page-head .sub{ color: var(--muted); font-family:'IBM Plex Mono',monospace; font-size:12.5px; width:100%; }
+
+  /* ---------- weather ---------- */
+  .city-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 640px){ .city-grid{ grid-template-columns: 1fr; } }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .panel .city-name{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--teal);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .panel .city-country{ color: var(--muted); font-size: 12.5px; margin-bottom: 18px; }
+  .temp-now{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 44px;
+    font-weight:500;
+    line-height:1;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom: 6px;
+  }
+  .temp-now .icon{ font-size: 30px; }
+  .condition{ color: var(--cream); font-size: 14px; margin-bottom: 18px; }
+  .forecast-row{
+    display:flex;
+    justify-content: space-between;
+    border-top: 1px dashed var(--hairline);
+    padding-top: 12px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .forecast-row .tomorrow-label{ color: var(--cream); }
+  .stat-loading{ color: var(--muted); font-family:'IBM Plex Mono',monospace; font-size: 12.5px; }
+  .stat-error{ color: var(--terracotta); font-family:'IBM Plex Mono',monospace; font-size: 12.5px; }
+
+  .air-row{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    border-top: 1px dashed var(--hairline);
+    margin-top: 12px;
+    padding-top: 12px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .air-row .air-label{ display:flex; align-items:center; gap:8px; }
+  .air-row .air-dot{ width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .air-row .air-value{ color: var(--cream); }
+
+  /* ---------- time ---------- */
+  .clock-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  @media (max-width: 640px){ .clock-grid{ grid-template-columns: 1fr; } }
+  .clock-panel{
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 24px 20px;
+    text-align:center;
+  }
+  .clock-panel .city-name{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    color: var(--teal);
+    text-transform: uppercase;
+    margin-bottom: 2px;
+  }
+  .clock-panel .city-country{ color: var(--muted); font-size: 12.5px; margin-bottom: 18px; }
+
+  .flap-time{
+    display:flex;
+    justify-content:center;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+  .flap{
+    background: var(--panel-raised);
+    border: 1px solid var(--hairline);
+    border-radius: 3px;
+    padding: 10px 4px;
+    min-width: 40px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 30px;
+    font-weight:600;
+    color: var(--brass);
+  }
+  .flap.colon{ background:none; border:none; color: var(--muted); padding:10px 0; }
+  .clock-date{ font-family:'IBM Plex Mono', monospace; color: var(--muted); font-size: 12.5px; }
+
+  .diff-banner{
+    text-align:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--cream);
+    border: 1px dashed var(--hairline);
+    border-radius: var(--radius);
+    padding: 12px;
+  }
+  .diff-banner strong{ color: var(--brass); }
+
+  /* ---------- currency ---------- */
+  .converter{
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .converter-row{
+    display:flex;
+    gap: 10px;
+    align-items:center;
+    flex-wrap: wrap;
+  }
+  .converter input, .converter select{
+    background: var(--panel-raised);
+    border: 1px solid var(--hairline);
+    color: var(--cream);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 15px;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+  }
+  .converter input{ width: 130px; }
+  .swap-btn{
+    background:none;
+    border: 1px solid var(--hairline);
+    color: var(--brass);
+    font-family:'IBM Plex Mono', monospace;
+    cursor:pointer;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+  }
+  .swap-btn:hover{ border-color: var(--brass); }
+  .converter-result{
+    margin-top: 16px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 26px;
+    color: var(--brass);
+  }
+  .converter-updated{
+    margin-top: 8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--muted);
+  }
+
+  table.rate-board{
+    width:100%;
+    border-collapse: collapse;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13.5px;
+  }
+  table.rate-board th{
+    text-align:left;
+    color: var(--muted);
+    font-weight:400;
+    letter-spacing:0.06em;
+    font-size:11.5px;
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--hairline);
+  }
+  table.rate-board td{
+    padding: 12px 8px;
+    border-bottom: 1px dashed var(--hairline);
+  }
+  table.rate-board tr:last-child td{ border-bottom:none; }
+  table.rate-board td.val{ color: var(--brass); text-align:right; }
+
+  footer{
+    text-align:center;
+    color: var(--muted);
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    margin-top: 50px;
+    letter-spacing: 0.05em;
+  }
+  .credit-pill{
+    display:inline-block;
+    text-decoration:none;
+    color: var(--brass);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    padding: 5px 14px;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+    transition: border-color .15s ease, color .15s ease;
+  }
+  .credit-pill:hover{ border-color: var(--brass); color: var(--cream); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <header class="stub" id="top">
+    <div class="brand">
+      <span class="mark">✦ CHECK DASH</span>
+      <h1>Two cities, one screen</h1>
+    </div>
+    <div class="route">
+      <div><strong>CNX</strong> · Chiang Mai</div>
+      <div><strong>RGN</strong> · Yangon</div>
+    </div>
+  </header>
+
+  <nav class="gates">
+    <button data-view="home" class="active"><span class="gate-no">01</span>Home</button>
+    <button data-view="weather"><span class="gate-no">02</span>Weather</button>
+    <button data-view="time"><span class="gate-no">03</span>Time</button>
+    <button data-view="currency"><span class="gate-no">04</span>Currency</button>
+  </nav>
+
+  <!-- ============ HOME ============ -->
+  <section class="view active" id="view-home">
+    <div class="greeting-block">
+      <div class="eyebrow" id="home-date">—</div>
+      <h2 id="home-greeting">Good morning</h2>
+      <div class="sub" id="home-time-sub">Chiang Mai local time —</div>
+    </div>
+
+    <div class="board">
+      <div class="ticket" data-goto="weather">
+        <span class="tkt-icon">☀︎</span>
+        <span class="arrow">↗</span>
+        <h3>Weather</h3>
+        <p>Today and tomorrow, side by side for Chiang Mai and Yangon.</p>
+      </div>
+      <div class="ticket" data-goto="time">
+        <span class="tkt-icon">◷</span>
+        <span class="arrow">↗</span>
+        <h3>Time</h3>
+        <p>Two clocks that matter, running live on one screen.</p>
+      </div>
+      <div class="ticket" data-goto="currency">
+        <span class="tkt-icon">฿</span>
+        <span class="arrow">↗</span>
+        <h3>Currency</h3>
+        <p>Convert freely between dollars, baht and kyat.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WEATHER ============ -->
+  <section class="view" id="view-weather">
+    <div class="page-head">
+      <button class="back" data-goto="home">← Back to home</button>
+      <h2>Weather</h2>
+      <span class="sub">A look at today, with a little planning for tomorrow.</span>
+    </div>
+
+    <div class="city-grid">
+      <div class="panel" id="wx-chiangmai">
+        <div class="city-name">Chiang Mai</div>
+        <div class="city-country">Thailand</div>
+        <div class="stat-loading">Reading the sky…</div>
+      </div>
+      <div class="panel" id="wx-yangon">
+        <div class="city-name">Yangon</div>
+        <div class="city-country">Myanmar</div>
+        <div class="stat-loading">Reading the sky…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TIME ============ -->
+  <section class="view" id="view-time">
+    <div class="page-head">
+      <button class="back" data-goto="home">← Back to home</button>
+      <h2>Time</h2>
+      <span class="sub">Two places that matter, together on one screen.</span>
+    </div>
+
+    <div class="clock-grid">
+      <div class="clock-panel">
+        <div class="city-name">Chiang Mai</div>
+        <div class="city-country">Thailand · UTC+7</div>
+        <div class="flap-time" id="clock-chiangmai"></div>
+        <div class="clock-date" id="date-chiangmai">—</div>
+      </div>
+      <div class="clock-panel">
+        <div class="city-name">Yangon</div>
+        <div class="city-country">Myanmar · UTC+6:30</div>
+        <div class="flap-time" id="clock-yangon"></div>
+        <div class="clock-date" id="date-yangon">—</div>
+      </div>
+    </div>
+
+    <div class="diff-banner" id="time-diff">Chiang Mai is <strong>30 minutes</strong> ahead of Yangon. Both clocks update every second using your device's clock, so keep it set to automatic.</div>
+  </section>
+
+  <!-- ============ CURRENCY ============ -->
+  <section class="view" id="view-currency">
+    <div class="page-head">
+      <button class="back" data-goto="home">← Back to home</button>
+      <h2>Currency</h2>
+      <span class="sub">Your fair everyday conversion, in one place.</span>
+    </div>
+
+    <div class="converter">
+      <div class="converter-row">
+        <input type="number" id="conv-amount" value="1" min="0" step="any">
+        <select id="conv-from">
+          <option value="USD">USD</option>
+          <option value="THB">THB</option>
+          <option value="MMK">MMK</option>
+        </select>
+        <button class="swap-btn" id="conv-swap" title="Swap currencies">⇄</button>
+        <select id="conv-to">
+          <option value="THB">THB</option>
+          <option value="USD">USD</option>
+          <option value="MMK">MMK</option>
+        </select>
+      </div>
+      <div class="converter-result" id="conv-result">—</div>
+      <div class="converter-updated" id="conv-updated">Fetching latest rates…</div>
+    </div>
+
+    <table class="rate-board" id="rate-board">
+      <thead>
+        <tr><th>Pair</th><th style="text-align:right">Rate</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>1 USD → THB</td><td class="val" id="rate-usd-thb">—</td></tr>
+        <tr><td>1 USD → MMK</td><td class="val" id="rate-usd-mmk">—</td></tr>
+        <tr><td>1,000 THB → MMK</td><td class="val" id="rate-thb-mmk">—</td></tr>
+        <tr><td>100,000 MMK → THB</td><td class="val" id="rate-mmk-thb">—</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    <a class="credit-pill" href="#top" id="credit-pill">✦ Sai Kham Naw</a>
+    <div>Check Dash · built for the CNX ⇄ RGN commute · rates from open.er-api.com · weather &amp; air quality from open‑meteo.com</div>
+  </footer>
+</div>
+
+<script>
+  /* ---------------- navigation ---------------- */
+  const views = document.querySelectorAll('.view');
+  const gateButtons = document.querySelectorAll('nav.gates button');
+
+  function goto(name){
+    views.forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+    gateButtons.forEach(b => b.classList.toggle('active', b.dataset.view === name));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (name === 'time') startClocks();
+  }
+
+  document.querySelectorAll('[data-goto]').forEach(el => {
+    el.addEventListener('click', () => goto(el.dataset.goto));
+  });
+  gateButtons.forEach(b => b.addEventListener('click', () => goto(b.dataset.view)));
+
+  document.getElementById('credit-pill').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* ---------------- home: greeting + date ---------------- */
+  function partOfDay(hour){
+    if (hour < 5) return 'Good night';
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    if (hour < 21) return 'Good evening';
+    return 'Good night';
+  }
+
+  function renderHome(){
+    const now = new Date();
+    const cnxHour = Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', hour: 'numeric', hour12: false }).format(now));
+    document.getElementById('home-greeting').textContent = partOfDay(cnxHour);
+    document.getElementById('home-date').textContent = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Bangkok', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    }).format(now);
+    document.getElementById('home-time-sub').textContent =
+      'Chiang Mai local time ' + new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit'
+      }).format(now);
+  }
+  renderHome();
+  setInterval(renderHome, 30000);
+
+  /* ---------------- time view: split-flap clocks ---------------- */
+  let clocksStarted = false;
+  function buildFlaps(container, text){
+    container.innerHTML = '';
+    text.split('').forEach(ch => {
+      const d = document.createElement('div');
+      d.className = ch === ':' ? 'flap colon' : 'flap';
+      d.textContent = ch;
+      container.appendChild(d);
+    });
+  }
+
+  function updateClocks(){
+    const now = new Date();
+    const cnx = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
+    const rgn = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Yangon', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(now);
+    buildFlaps(document.getElementById('clock-chiangmai'), cnx);
+    buildFlaps(document.getElementById('clock-yangon'), rgn);
+    document.getElementById('date-chiangmai').textContent = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Bangkok', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(now);
+    document.getElementById('date-yangon').textContent = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Yangon', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(now);
+  }
+
+  function startClocks(){
+    if (clocksStarted) return;
+    clocksStarted = true;
+    updateClocks();
+    setInterval(updateClocks, 1000);
+  }
+
+  /* ---------------- weather view ---------------- */
+  const WMO = {
+    0:['Clear sky','☀︎'],1:['Mostly clear','🌤'],2:['Partly cloudy','⛅'],3:['Overcast','☁︎'],
+    45:['Fog','🌫'],48:['Icy fog','🌫'],
+    51:['Light drizzle','🌦'],53:['Drizzle','🌦'],55:['Dense drizzle','🌦'],
+    61:['Light rain','🌧'],63:['Rain','🌧'],65:['Heavy rain','🌧'],
+    66:['Freezing rain','🌧'],67:['Freezing rain','🌧'],
+    71:['Light snow','🌨'],73:['Snow','🌨'],75:['Heavy snow','🌨'],
+    80:['Rain showers','🌦'],81:['Rain showers','🌦'],82:['Violent showers','⛈'],
+    95:['Thunderstorm','⛈'],96:['Thunderstorm, hail','⛈'],99:['Thunderstorm, hail','⛈']
+  };
+  function describe(code){ return WMO[code] || ['Conditions unclear','—']; }
+
+  // US EPA-style PM2.5 breakpoints (µg/m³), used just to label the reading
+  function pm25Category(v){
+    if (v <= 12)    return ['Good', 'var(--teal)'];
+    if (v <= 35.4)  return ['Moderate', 'var(--brass)'];
+    if (v <= 55.4)  return ['Unhealthy for sensitive groups', '#c98a3e'];
+    if (v <= 150.4) return ['Unhealthy', 'var(--terracotta)'];
+    if (v <= 250.4) return ['Very unhealthy', '#8a3a2c'];
+    return ['Hazardous', '#5c1f16'];
+  }
+
+  async function fetchJSON(url){
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('bad response');
+    return res.json();
+  }
+
+  async function loadWeather(elId, lat, lon, tz, label, country){
+    const el = document.getElementById(elId);
+    const wxUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code&timezone=${encodeURIComponent(tz)}`;
+    const aqUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm2_5&timezone=${encodeURIComponent(tz)}`;
+
+    // Weather and air quality are separate APIs — fetch in parallel, and let
+    // one failing not take the other down with it.
+    const [wxResult, aqResult] = await Promise.allSettled([fetchJSON(wxUrl), fetchJSON(aqUrl)]);
+
+    if (wxResult.status !== 'fulfilled'){
+      el.innerHTML = `
+        <div class="city-name">${label}</div>
+        <div class="city-country">${country}</div>
+        <div class="stat-error">Couldn't reach the forecast. Check your connection and reload.</div>`;
+      return;
+    }
+
+    const data = wxResult.value;
+    const [nowDesc, nowIcon] = describe(data.current.weather_code);
+    const [tmrDesc] = describe(data.daily.weather_code[1]);
+    // Build the label from the date string directly (avoids UTC/local day-shift bugs)
+    const [ty, tm, td] = data.daily.time[1].split('-').map(Number);
+    const tmrLabel = new Intl.DateTimeFormat('en-US', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(ty, tm - 1, td)));
+
+    let airHTML = `<div class="air-row"><span class="air-label">PM2.5</span><span>reading unavailable</span></div>`;
+    if (aqResult.status === 'fulfilled' && aqResult.value.current && typeof aqResult.value.current.pm2_5 === 'number'){
+      const pm = aqResult.value.current.pm2_5;
+      const [aqLabel, aqColor] = pm25Category(pm);
+      airHTML = `
+        <div class="air-row">
+          <span class="air-label"><span class="air-dot" style="background:${aqColor}"></span>PM2.5 · ${aqLabel}</span>
+          <span class="air-value">${pm.toFixed(1)} µg/m³</span>
+        </div>`;
+    }
+
+    el.innerHTML = `
+      <div class="city-name">${label}</div>
+      <div class="city-country">${country}</div>
+      <div class="temp-now"><span class="icon">${nowIcon}</span>${data.current.temperature_2m.toFixed(1)} °C</div>
+      <div class="condition">${nowDesc} · updated ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} local</div>
+      <div class="forecast-row">
+        <span class="tomorrow-label">Tomorrow, ${tmrLabel}</span>
+        <span>${data.daily.temperature_2m_min[1].toFixed(0)}° – ${data.daily.temperature_2m_max[1].toFixed(0)}° · ${tmrDesc}</span>
+      </div>
+      ${airHTML}`;
+  }
+
+  loadWeather('wx-chiangmai', 18.7883, 98.9853, 'Asia/Bangkok', 'Chiang Mai', 'Thailand');
+  loadWeather('wx-yangon', 16.8409, 96.1735, 'Asia/Yangon', 'Yangon', 'Myanmar');
+
+  /* ---------------- currency view ---------------- */
+  let rates = null; // { THB, MMK } per 1 USD
+
+  async function loadRates(){
+    try{
+      const res = await fetch('https://open.er-api.com/v6/latest/USD');
+      if (!res.ok) throw new Error('bad response');
+      const data = await res.json();
+      rates = { USD: 1, THB: data.rates.THB, MMK: data.rates.MMK };
+
+      document.getElementById('rate-usd-thb').textContent = rates.THB.toFixed(2) + ' THB';
+      document.getElementById('rate-usd-mmk').textContent = rates.MMK.toFixed(2) + ' MMK';
+      document.getElementById('rate-thb-mmk').textContent = (1000 * rates.MMK / rates.THB).toFixed(2) + ' MMK';
+      document.getElementById('rate-mmk-thb').textContent = (100000 * rates.THB / rates.MMK).toFixed(2) + ' THB';
+
+      const stamp = data.time_last_update_utc ? new Date(data.time_last_update_utc) : new Date();
+      document.getElementById('conv-updated').textContent =
+        'Latest available rates, updated ' + stamp.toLocaleString([], { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+
+      runConversion();
+    }catch(err){
+      document.getElementById('conv-updated').textContent = "Couldn't reach the rate feed. Check your connection and reload.";
+      document.getElementById('conv-result').textContent = '—';
+    }
+  }
+
+  function runConversion(){
+    if (!rates) return;
+    const amount = parseFloat(document.getElementById('conv-amount').value) || 0;
+    const from = document.getElementById('conv-from').value;
+    const to = document.getElementById('conv-to').value;
+    const inUSD = amount / rates[from];
+    const result = inUSD * rates[to];
+    document.getElementById('conv-result').textContent =
+      amount.toLocaleString() + ' ' + from + ' = ' + result.toLocaleString(undefined, {maximumFractionDigits: 2}) + ' ' + to;
+  }
+
+  document.getElementById('conv-amount').addEventListener('input', runConversion);
+  document.getElementById('conv-from').addEventListener('change', runConversion);
+  document.getElementById('conv-to').addEventListener('change', runConversion);
+  document.getElementById('conv-swap').addEventListener('click', () => {
+    const from = document.getElementById('conv-from');
+    const to = document.getElementById('conv-to');
+    [from.value, to.value] = [to.value, from.value];
+    runConversion();
+  });
+
+  loadRates();
+</script>
+
+</body>
+</html>
